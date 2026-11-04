@@ -110,6 +110,7 @@ class CycleSettingTab extends PluginSettingTab {
     const checks = []; // [input, () => is the field valid?]
     let saveButton;
     containerEl.empty();
+    new Setting(containerEl).setName("Checkbox statuses").setHeading();
     containerEl.createEl("p", {
       text: "One status per row: its name, its checkbox character, and the next character on click. Type a space for the empty checkbox. A checkbox whose character is not declared keeps Obsidian's default behavior. Changes apply once saved.",
     });
@@ -142,6 +143,7 @@ class CycleSettingTab extends PluginSettingTab {
           t.setPlaceholder("Char").setValue(status.symbol).onChange((v) => { status.symbol = toSymbol(v); validate(); });
           checks.push([t.inputEl, () => status.symbol !== "" && unique(status)]);
         })
+        .then((s) => s.controlEl.createSpan({ text: "→" })) // visual only, between Char and Next
         .addText((t) => {
           t.setPlaceholder("Next").setValue(status.next).onChange((v) => { status.next = toSymbol(v); validate(); });
           t.inputEl.maxLength = 1;
