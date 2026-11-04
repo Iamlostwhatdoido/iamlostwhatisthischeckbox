@@ -12,7 +12,7 @@ const DEFAULT_SETTINGS = {
   ],
 };
 
-// Obsidian's two native statuses: always the first two rows, characters fixed, not deletable
+// Obsidian's two native statuses: always present, characters fixed, not deletable (rows flagged "locked")
 const LOCKED = [" ", "x"];
 
 // Start of a checkbox line: indent, quotes/callouts (>), bullet or number, then "[c]"
@@ -202,11 +202,11 @@ module.exports = class IamlostCheckboxPlugin extends Plugin {
   async onload() {
     const data = (await this.loadData()) || {};
     const statuses = data.statuses || DEFAULT_SETTINGS.statuses.map((s) => ({ ...s }));
-    // " " and "x" (Obsidian's own statuses) always come first, in that order: moved up, or recreated
+    // " " and "x" (Obsidian's own statuses) always exist and carry the lock, wherever they sit
     LOCKED.forEach((symbol, i) => {
-      const found = statuses.findIndex((s) => s.symbol === symbol);
-      const status = found < 0 ? { ...DEFAULT_SETTINGS.statuses[i] } : statuses.splice(found, 1)[0];
-      statuses.splice(i, 0, status);
+      const found = statuses.find((s) => s.symbol === symbol);
+      if (found) found.locked = true;
+      else statuses.splice(i, 0, { ...DEFAULT_SETTINGS.statuses[i], locked: true });
     });
     this.settings = { statuses };
     this.registerEditorExtension(checkboxExtension(this));
@@ -281,8 +281,8 @@ class CycleSettingTab extends PluginSettingTab {
           t.inputEl.maxLength = 1;
           t.inputEl.size = 3;
           // Locked rows: Obsidian's native characters are fixed
-          if (i === 0) return t.setPlaceholder("space").setDisabled(true);
-          if (i < LOCKED.length) return t.setValue(status.symbol).setDisabled(true);
+          if (status.locked && status.symbol === " ") return t.setPlaceholder("space").setDisabled(true);
+          if (status.locked) return t.setValue(status.symbol).setDisabled(true);
           t.setPlaceholder("Char").setValue(status.symbol).onChange((v) => { status.symbol = toSymbol(v); validate(); });
           checks.push([t.inputEl, () => status.symbol !== "" && unique(status)]);
         })
@@ -293,10 +293,10 @@ class CycleSettingTab extends PluginSettingTab {
           t.inputEl.size = 3;
           checks.push([t.inputEl, () => status.next !== ""]);
         })
-        // Reorder the custom rows (the menu follows this order); locked rows stay on top
+        // Reorder any row, locked ones included (the menu and "Previous" follow this order)
         .addExtraButton((b) => {
           b.setIcon("arrow-up").setTooltip("Move up");
-          if (i <= LOCKED.length) return b.extraSettingsEl.style.visibility = "hidden";
+          if (i === 0) return b.extraSettingsEl.style.visibility = "hidden";
           b.onClick(() => {
             statuses.splice(i - 1, 0, statuses.splice(i, 1)[0]);
             this.display();
@@ -304,7 +304,7 @@ class CycleSettingTab extends PluginSettingTab {
         })
         .addExtraButton((b) => {
           b.setIcon("arrow-down").setTooltip("Move down");
-          if (i < LOCKED.length || i === statuses.length - 1) return b.extraSettingsEl.style.visibility = "hidden";
+          if (i === statuses.length - 1) return b.extraSettingsEl.style.visibility = "hidden";
           b.onClick(() => {
             statuses.splice(i + 1, 0, statuses.splice(i, 1)[0]);
             this.display();
@@ -312,7 +312,7 @@ class CycleSettingTab extends PluginSettingTab {
         })
         .addExtraButton((b) => {
           // Locked rows cannot be deleted: the icon stays, invisible, to keep the columns aligned
-          if (i < LOCKED.length) return b.setIcon("trash").extraSettingsEl.style.visibility = "hidden";
+          if (status.locked) return b.setIcon("trash").extraSettingsEl.style.visibility = "hidden";
           b.setIcon("trash").setTooltip("Delete this status").onClick(() => {
             statuses.splice(i, 1);
             this.display();
