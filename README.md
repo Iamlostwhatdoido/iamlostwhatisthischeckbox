@@ -4,23 +4,24 @@ tags: ai_generated
 
 # iamlostwhatisthischeckbox
 
-Plugin Obsidian minimal : en Live Preview, un clic sur une case à cocher la fait passer au **statut suivant d'un cycle choisi**, au lieu du simple « vide / coché ».
+Minimal Obsidian plugin: in Live Preview, clicking a checkbox moves it to the **next status of a custom cycle**, instead of the plain "empty / checked" toggle.
 
-Exemple avec le cycle `[ ] [D] [x]` : `- [ ]` → `- [D]` → `- [x]` → `- [ ]`…
+Example: `- [ ]` → `- [D]` → `- [x]` → `- [ ]`…
 
-Seul le caractère entre crochets change : ni date, ni propriété ajoutée (contrairement au plugin Tasks, dont le mécanisme de clic est repris).
+Only the character between the brackets changes: no date, no added property (unlike the Tasks plugin, whose click mechanism is borrowed).
 
-## Réglages
-- **Cycle des statuts** : les statuts dans l'ordre, entre crochets, par exemple `[ ] [D] [x]`.
-- Une case dont le statut n'est pas dans le cycle garde le comportement normal d'Obsidian.
+## Settings
+- One row per status: **name**, **checkbox character**, **next character** on click. Add as many as you want.
+- A cleared character field means a space (empty checkbox).
+- A checkbox whose character is not declared keeps Obsidian's default behavior.
 
-## Commande
-- **Statut suivant de la case** : même cycle, sur la ligne du curseur. À lier à un raccourci clavier ; utile en mode source.
+## Command
+- **Cycle checkbox status**: same cycle, on the cursor's line. Bind it to a hotkey; useful in source mode.
 
 ## Installation
-Copier le dossier `iamlostwhatisthischeckbox/` (`main.js` et `manifest.json`) dans `<vault>/.obsidian/plugins/`, puis activer le plugin dans les réglages d'Obsidian.
+Copy the `iamlostwhatisthischeckbox/` folder (`main.js` and `manifest.json`) into `<vault>/.obsidian/plugins/`, then enable the plugin in Obsidian's settings.
 
-## Limites connues
-- Cases dans les callouts ignorées (comme Tasks).
-- Mode lecture non géré : seulement Live Preview et la commande.
-- JavaScript brut, sans étape de build : version « quick and dirty ».
+## Known limits
+- Checkboxes inside callouts are ignored (like Tasks).
+- Reading mode is not handled: Live Preview and the command only.
+- Plain JavaScript, no build step: "quick and dirty" version.

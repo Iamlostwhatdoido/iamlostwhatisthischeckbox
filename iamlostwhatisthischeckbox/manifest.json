@@ -3,7 +3,7 @@
   "name": "iamlostwhatisthischeckbox",
   "version": "0.1.0",
   "minAppVersion": "1.4.0",
-  "description": "Clic sur une case à cocher en Live Preview : passe au statut suivant d'un cycle personnalisé.",
+  "description": "Click a checkbox in Live Preview to move it to the next status of a custom cycle.",
   "author": "Iamlostwhatdoido",
   "isDesktopOnly": false
 }
