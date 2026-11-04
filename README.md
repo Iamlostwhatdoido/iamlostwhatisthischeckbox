@@ -20,12 +20,16 @@ Only the character between the brackets changes: no date, no added property (unl
 ## Right-click menu
 Right-click a checkbox (Live Preview or Reading mode) to pick any status from a menu (`[x] Done`…), the current one ticked. Works even on a checkbox whose character is not declared.
 
-## Command
-- **Cycle checkbox status**: same cycle, on the cursor's line. Bind it to a hotkey; useful in source mode.
+## Commands
+Editor commands (source mode and Live Preview), applied to every checkbox line of the selection. Bind them to hotkeys.
+- **Cycle checkbox status**: next status of the cycle.
+- **Previous checkbox status**: one step back. When several statuses lead to the current one, the lowest row in the settings wins.
+- **Pick checkbox status**: keyboard version of the right-click menu.
 
 ## Installation
 Copy the `iamlostwhatisthischeckbox/` folder (`main.js` and `manifest.json`) into `<vault>/.obsidian/plugins/`, then enable the plugin in Obsidian's settings.
 
 ## Known limits
 - Checkboxes inside callouts are ignored (like Tasks).
+- Mobile: the right-click menu relies on a long press, not tested yet. **Pick checkbox status** is the fallback.
 - Plain JavaScript, no build step: "quick and dirty" version.

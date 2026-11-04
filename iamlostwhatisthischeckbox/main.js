@@ -1,7 +1,7 @@
-// iamlostwhatisthischeckbox: clicking a checkbox in Live Preview moves it to the next status of a custom cycle.
+// iamlostwhatisthischeckbox: clicking a checkbox (Live Preview or Reading mode) moves it to the next status of a custom cycle.
 // Plain JavaScript, no build step (quick and dirty). Click mechanism borrowed from Tasks
 // (a CodeMirror extension that intercepts the click), without dates or added properties.
-const { Menu, Notice, Plugin, PluginSettingTab, Setting } = require("obsidian");
+const { FuzzySuggestModal, Menu, Notice, Plugin, PluginSettingTab, Setting } = require("obsidian");
 const { ViewPlugin } = require("@codemirror/view");
 
 // A status = a name, its checkbox character, and the character that follows it on click (like Tasks)
@@ -43,6 +43,48 @@ function cycleLine(view, line, statuses) {
   if (next === null) return null;
   setStatus(view, line, next);
   return next;
+}
+
+// Previous character: the status whose next is the current one, or null. Several can lead to the
+// same one (e.g. "x" and "A" both → " "): the last row wins, so custom rows beat the locked ones
+function previousStatus(statuses, current) {
+  const status = [...statuses].reverse().find((s) => s.symbol !== "" && s.next === current);
+  return status ? status.symbol : null;
+}
+
+// Applies compute(current) → new character (or null to skip) to every checkbox line the selection touches
+function applyToSelection(view, compute) {
+  const { state } = view;
+  const seen = new Set();
+  const changes = [];
+  for (const range of state.selection.ranges) {
+    const first = state.doc.lineAt(range.from).number;
+    const last = state.doc.lineAt(range.to).number;
+    for (let n = first; n <= last; n++) {
+      if (seen.has(n)) continue;
+      seen.add(n);
+      const line = state.doc.line(n);
+      const m = TASK.exec(line.text);
+      const symbol = m && compute(m[2]);
+      if (symbol == null) continue;
+      const from = line.from + m[1].length;
+      changes.push({ from, to: from + m[2].length, insert: symbol });
+    }
+  }
+  if (changes.length) view.dispatch({ changes });
+}
+
+// Keyboard version of the right-click menu: fuzzy list of the complete statuses
+class StatusPicker extends FuzzySuggestModal {
+  constructor(app, statuses, onPick) {
+    super(app);
+    this.statuses = statuses.filter((s) => s.symbol !== "" && s.name.trim() !== "");
+    this.onPick = onPick;
+    this.setPlaceholder("Pick a checkbox status");
+  }
+  getItems() { return this.statuses; }
+  getItemText(status) { return `[${status.symbol}] ${status.name}`; }
+  onChooseItem(status) { this.onPick(status.symbol); }
 }
 
 // The checkbox's task line, or null if the event is not on a usable checkbox
@@ -170,15 +212,23 @@ module.exports = class IamlostCheckboxPlugin extends Plugin {
     this.registerEditorExtension(checkboxExtension(this));
     this.registerMarkdownPostProcessor(readingMode(this));
 
-    // Same cycle from the keyboard, on the cursor's line (useful in source mode)
+    // Keyboard commands, on every checkbox line of the selection (editor.cm: CodeMirror 6 EditorView,
+    // undocumented but stable)
     this.addCommand({
       id: "cycle-checkbox-status",
       name: "Cycle checkbox status",
-      editorCallback: (editor) => {
-        const cm = editor.cm; // CodeMirror 6 EditorView (undocumented, but stable)
-        const line = cm.state.doc.lineAt(cm.state.selection.main.head);
-        cycleLine(cm, line, this.settings.statuses);
-      },
+      editorCallback: (editor) => applyToSelection(editor.cm, (c) => nextStatus(this.settings.statuses, c)),
+    });
+    this.addCommand({
+      id: "previous-checkbox-status",
+      name: "Previous checkbox status",
+      editorCallback: (editor) => applyToSelection(editor.cm, (c) => previousStatus(this.settings.statuses, c)),
+    });
+    this.addCommand({
+      id: "pick-checkbox-status",
+      name: "Pick checkbox status",
+      editorCallback: (editor) =>
+        new StatusPicker(this.app, this.settings.statuses, (symbol) => applyToSelection(editor.cm, () => symbol)).open(),
     });
 
     this.addSettingTab(new CycleSettingTab(this.app, this));
@@ -274,8 +324,11 @@ class CycleSettingTab extends PluginSettingTab {
     validate();
   }
 
-  // Closing the settings without saving drops the draft
+  // Closing the settings without saving drops the draft, and says so if it had changes
   hide() {
+    if (this.draft && JSON.stringify(this.draft) !== JSON.stringify(this.plugin.settings.statuses)) {
+      new Notice("Unsaved checkbox status changes discarded");
+    }
     this.draft = null;
   }
 }
