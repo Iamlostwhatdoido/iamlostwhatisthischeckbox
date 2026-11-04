@@ -18,7 +18,7 @@ Seul le caractère entre crochets change : ni date, ni propriété ajoutée (con
 - **Statut suivant de la case** : même cycle, sur la ligne du curseur. À lier à un raccourci clavier ; utile en mode source.
 
 ## Installation
-Copier `main.js` et `manifest.json` dans `<vault>/.obsidian/plugins/iamlostwhatisthischeckbox/`, puis activer le plugin dans les réglages d'Obsidian.
+Copier le dossier `iamlostwhatisthischeckbox/` (`main.js` et `manifest.json`) dans `<vault>/.obsidian/plugins/`, puis activer le plugin dans les réglages d'Obsidian.
 
 ## Limites connues
 - Cases dans les callouts ignorées (comme Tasks).
