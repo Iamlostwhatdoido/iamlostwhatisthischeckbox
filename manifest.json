@@ -1,0 +1,9 @@
+{
+  "id": "iamlostwhatisthischeckbox",
+  "name": "iamlostwhatisthischeckbox",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Clic sur une case à cocher en Live Preview : passe au statut suivant d'un cycle personnalisé.",
+  "author": "Iamlostwhatdoido",
+  "isDesktopOnly": false
+}
