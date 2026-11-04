@@ -293,6 +293,23 @@ class CycleSettingTab extends PluginSettingTab {
           t.inputEl.size = 3;
           checks.push([t.inputEl, () => status.next !== ""]);
         })
+        // Reorder the custom rows (the menu follows this order); locked rows stay on top
+        .addExtraButton((b) => {
+          b.setIcon("arrow-up").setTooltip("Move up");
+          if (i <= LOCKED.length) return b.extraSettingsEl.style.visibility = "hidden";
+          b.onClick(() => {
+            statuses.splice(i - 1, 0, statuses.splice(i, 1)[0]);
+            this.display();
+          });
+        })
+        .addExtraButton((b) => {
+          b.setIcon("arrow-down").setTooltip("Move down");
+          if (i < LOCKED.length || i === statuses.length - 1) return b.extraSettingsEl.style.visibility = "hidden";
+          b.onClick(() => {
+            statuses.splice(i + 1, 0, statuses.splice(i, 1)[0]);
+            this.display();
+          });
+        })
         .addExtraButton((b) => {
           // Locked rows cannot be deleted: the icon stays, invisible, to keep the columns aligned
           if (i < LOCKED.length) return b.setIcon("trash").extraSettingsEl.style.visibility = "hidden";

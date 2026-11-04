@@ -1,7 +1,7 @@
 {
   "id": "iamlostwhatisthischeckbox",
   "name": "iamlostwhatisthischeckbox",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "1.4.0",
   "description": "Click a checkbox in Live Preview or Reading mode to move it to the next status of a custom cycle.",
   "author": "Iamlostwhatdoido",

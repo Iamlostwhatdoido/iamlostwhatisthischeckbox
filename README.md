@@ -14,6 +14,7 @@ Only the character between the brackets changes: no date, no added property (unl
 - One row per status: **name**, **checkbox character**, **next character** on click. Add as many as you want.
 - Type a space for the empty checkbox. Empty fields and duplicate characters turn red, and **Save** stays disabled until every field is valid.
 - The first two rows are Obsidian's own statuses, `[ ]` and `[x]`: their characters are fixed and they cannot be deleted. Default cycle: `[ ]` → `[x]` → `[ ]`.
+- Custom rows can be reordered with the up and down arrows; the right-click menu follows this order.
 - Changes apply once **Save** is clicked; closing the settings without saving drops them.
 - A checkbox whose character is not declared keeps Obsidian's default behavior.
 
