@@ -17,6 +17,9 @@ Only the character between the brackets changes: no date, no added property (unl
 - Changes apply once **Save** is clicked; closing the settings without saving drops them.
 - A checkbox whose character is not declared keeps Obsidian's default behavior.
 
+## Right-click menu
+Right-click a checkbox in Live Preview to pick any status from a menu (`[x] Done`…), the current one ticked. Works even on a checkbox whose character is not declared.
+
 ## Command
 - **Cycle checkbox status**: same cycle, on the cursor's line. Bind it to a hotkey; useful in source mode.
 

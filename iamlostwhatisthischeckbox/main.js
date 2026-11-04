@@ -1,7 +1,7 @@
 // iamlostwhatisthischeckbox: clicking a checkbox in Live Preview moves it to the next status of a custom cycle.
 // Plain JavaScript, no build step (quick and dirty). Click mechanism borrowed from Tasks
 // (a CodeMirror extension that intercepts the click), without dates or added properties.
-const { Notice, Plugin, PluginSettingTab, Setting } = require("obsidian");
+const { Menu, Notice, Plugin, PluginSettingTab, Setting } = require("obsidian");
 const { ViewPlugin } = require("@codemirror/view");
 
 // A status = a name, its checkbox character, and the character that follows it on click (like Tasks)
@@ -27,15 +27,32 @@ function nextStatus(statuses, current) {
   return status && status.next !== "" ? status.next : null;
 }
 
-// Replaces the status character of the line; returns the new status, or null
+// Writes a status character on the line (no-op if the line is no longer a checkbox)
+function setStatus(view, line, symbol) {
+  const m = TASK.exec(line.text);
+  if (!m) return;
+  const from = line.from + m[1].length;
+  view.dispatch({ changes: { from, to: from + m[2].length, insert: symbol } });
+}
+
+// Replaces the status character of the line by the next one; returns the new status, or null
 function cycleLine(view, line, statuses) {
   const m = TASK.exec(line.text);
   if (!m) return null;
   const next = nextStatus(statuses, m[2]);
   if (next === null) return null;
-  const from = line.from + m[1].length;
-  view.dispatch({ changes: { from, to: from + m[2].length, insert: next } });
+  setStatus(view, line, next);
   return next;
+}
+
+// The checkbox's task line, or null if the event is not on a usable checkbox
+function checkboxLine(view, evt) {
+  const box = evt.target;
+  if (!(box instanceof HTMLInputElement) || box.type !== "checkbox") return null;
+  // Like Tasks: leave callouts alone (line position is unreliable there)
+  if (box.closest(".callout-content")) return null;
+  const line = view.state.doc.lineAt(view.posAtDOM(box));
+  return TASK.test(line.text) ? line : null;
 }
 
 const checkboxExtension = (plugin) =>
@@ -43,23 +60,45 @@ const checkboxExtension = (plugin) =>
     class {
       constructor(view) {
         this.view = view;
+
+        // Left click: next status of the cycle
         this.onClick = (evt) => {
-          const box = evt.target;
-          if (!(box instanceof HTMLInputElement) || box.type !== "checkbox") return;
-          // Like Tasks: leave callouts alone (line position is unreliable there)
-          if (box.closest(".callout-content")) return;
-          const line = view.state.doc.lineAt(view.posAtDOM(box));
+          const line = checkboxLine(view, evt);
+          if (!line) return;
           const statuses = plugin.settings.statuses;
-          if (nextStatus(statuses, TASK.exec(line.text)?.[2]) === null) return;
+          if (nextStatus(statuses, TASK.exec(line.text)[2]) === null) return;
           evt.preventDefault();
           const next = cycleLine(view, line, statuses);
           // Resync the displayed checkbox with the text after the redraw
-          window.setTimeout(() => { box.checked = next !== " "; }, 1);
+          window.setTimeout(() => { evt.target.checked = next !== " "; }, 1);
         };
+
+        // Right click: menu of every complete status, the current one ticked
+        this.onContextMenu = (evt) => {
+          const line = checkboxLine(view, evt);
+          if (!line) return;
+          evt.preventDefault();
+          evt.stopPropagation();
+          const current = TASK.exec(line.text)[2];
+          const menu = new Menu();
+          for (const status of plugin.settings.statuses) {
+            if (status.symbol === "" || status.name.trim() === "") continue;
+            menu.addItem((item) =>
+              item
+                .setTitle(`[${status.symbol}] ${status.name}`)
+                .setChecked(status.symbol === current)
+                .onClick(() => setStatus(view, view.state.doc.line(line.number), status.symbol))
+            );
+          }
+          menu.showAtMouseEvent(evt);
+        };
+
         view.dom.addEventListener("click", this.onClick);
+        view.dom.addEventListener("contextmenu", this.onContextMenu);
       }
       destroy() {
         this.view.dom.removeEventListener("click", this.onClick);
+        this.view.dom.removeEventListener("contextmenu", this.onContextMenu);
       }
     }
   );
