@@ -55,6 +55,67 @@ function checkboxLine(view, evt) {
   return TASK.test(line.text) ? line : null;
 }
 
+// Menu of every complete status, the current one ticked; apply(symbol) writes the choice
+function showStatusMenu(evt, statuses, current, apply) {
+  const menu = new Menu();
+  for (const status of statuses) {
+    if (status.symbol === "" || status.name.trim() === "") continue;
+    menu.addItem((item) =>
+      item
+        .setTitle(`[${status.symbol}] ${status.name}`)
+        .setChecked(status.symbol === current)
+        .onClick(() => apply(status.symbol))
+    );
+  }
+  menu.showAtMouseEvent(evt);
+}
+
+// Reading mode: no editor, so the status is written in the file itself, on the checkbox's line
+function readingMode(plugin) {
+  return (el, ctx) => {
+    // File line of a rendered checkbox: section start + the li's line offset (as Tasks does)
+    const target = (evt) => {
+      const box = evt.target;
+      if (!(box instanceof HTMLInputElement) || box.type !== "checkbox") return null;
+      if (box.closest(".callout")) return null; // callouts: unreliable line offsets, left alone
+      const li = box.closest("li[data-line]");
+      const info = ctx.getSectionInfo(el);
+      if (!li || !info) return null;
+      return { line: info.lineStart + Number(li.getAttribute("data-line")), current: li.getAttribute("data-task") || " " };
+    };
+
+    const write = (lineNo, symbol) => {
+      const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
+      if (!file) return;
+      plugin.app.vault.process(file, (data) => {
+        const lines = data.split("\n");
+        const m = TASK.exec(lines[lineNo] ?? "");
+        if (!m) return data; // the line moved meanwhile: change nothing
+        lines[lineNo] = lines[lineNo].slice(0, m[1].length) + symbol + lines[lineNo].slice(m[1].length + m[2].length);
+        return lines.join("\n");
+      });
+    };
+
+    // Capture phase on the section: runs before Obsidian's own checkbox handler, and stops it
+    el.addEventListener("click", (evt) => {
+      const t = target(evt);
+      const next = t && nextStatus(plugin.settings.statuses, t.current);
+      if (next == null) return; // undeclared status: Obsidian's default toggle
+      evt.preventDefault();
+      evt.stopPropagation();
+      write(t.line, next);
+    }, true);
+
+    el.addEventListener("contextmenu", (evt) => {
+      const t = target(evt);
+      if (!t) return;
+      evt.preventDefault();
+      evt.stopPropagation();
+      showStatusMenu(evt, plugin.settings.statuses, t.current, (symbol) => write(t.line, symbol));
+    }, true);
+  };
+}
+
 const checkboxExtension = (plugin) =>
   ViewPlugin.fromClass(
     class {
@@ -80,17 +141,9 @@ const checkboxExtension = (plugin) =>
           evt.preventDefault();
           evt.stopPropagation();
           const current = TASK.exec(line.text)[2];
-          const menu = new Menu();
-          for (const status of plugin.settings.statuses) {
-            if (status.symbol === "" || status.name.trim() === "") continue;
-            menu.addItem((item) =>
-              item
-                .setTitle(`[${status.symbol}] ${status.name}`)
-                .setChecked(status.symbol === current)
-                .onClick(() => setStatus(view, view.state.doc.line(line.number), status.symbol))
-            );
-          }
-          menu.showAtMouseEvent(evt);
+          showStatusMenu(evt, plugin.settings.statuses, current, (symbol) =>
+            setStatus(view, view.state.doc.line(line.number), symbol)
+          );
         };
 
         view.dom.addEventListener("click", this.onClick);
@@ -115,6 +168,7 @@ module.exports = class IamlostCheckboxPlugin extends Plugin {
     });
     this.settings = { statuses };
     this.registerEditorExtension(checkboxExtension(this));
+    this.registerMarkdownPostProcessor(readingMode(this));
 
     // Same cycle from the keyboard, on the cursor's line (useful in source mode)
     this.addCommand({

@@ -4,7 +4,7 @@ tags: ai_generated
 
 # iamlostwhatisthischeckbox
 
-Minimal Obsidian plugin: in Live Preview, clicking a checkbox moves it to the **next status of a custom cycle**, instead of the plain "empty / checked" toggle.
+Minimal Obsidian plugin: in Live Preview and Reading mode, clicking a checkbox moves it to the **next status of a custom cycle**, instead of the plain "empty / checked" toggle.
 
 Example: `- [ ]` → `- [D]` → `- [x]` → `- [ ]`…
 
@@ -18,7 +18,7 @@ Only the character between the brackets changes: no date, no added property (unl
 - A checkbox whose character is not declared keeps Obsidian's default behavior.
 
 ## Right-click menu
-Right-click a checkbox in Live Preview to pick any status from a menu (`[x] Done`…), the current one ticked. Works even on a checkbox whose character is not declared.
+Right-click a checkbox (Live Preview or Reading mode) to pick any status from a menu (`[x] Done`…), the current one ticked. Works even on a checkbox whose character is not declared.
 
 ## Command
 - **Cycle checkbox status**: same cycle, on the cursor's line. Bind it to a hotkey; useful in source mode.
@@ -28,5 +28,4 @@ Copy the `iamlostwhatisthischeckbox/` folder (`main.js` and `manifest.json`) int
 
 ## Known limits
 - Checkboxes inside callouts are ignored (like Tasks).
-- Reading mode is not handled: Live Preview and the command only.
 - Plain JavaScript, no build step: "quick and dirty" version.
