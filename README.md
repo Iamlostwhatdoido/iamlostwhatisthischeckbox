@@ -32,5 +32,5 @@ Copy the `iamlostwhatisthischeckbox/` folder (`main.js` and `manifest.json`) int
 
 ## Known limits
 - Checkboxes inside callouts are ignored (like Tasks).
-- Mobile: the right-click menu relies on a long press, not tested yet. **Pick checkbox status** is the fallback.
+- Mobile: the right-click menu opens with a long press (tested).
 - Plain JavaScript, no build step: "quick and dirty" version.
