@@ -158,22 +158,64 @@ function readingMode(plugin) {
   };
 }
 
+// Every event that starts a press, mouse or touch
+const PRESS_EVENTS = ["pointerdown", "mousedown", "touchstart"];
+// A touch held longer than this is a long press (it opens the status menu instead)
+const LONG_PRESS_MS = 400;
+// A touch that moved farther than this is a swipe (scrolling), not a tap
+const TAP_SLOP_PX = 10;
+
 const checkboxExtension = (plugin) =>
   ViewPlugin.fromClass(
     class {
       constructor(view) {
         this.view = view;
 
-        // Left click: next status of the cycle
-        this.onClick = (evt) => {
+        // Next status of the cycle for the checkbox under evt; true if it was handled
+        const cycle = (evt) => {
           const line = checkboxLine(view, evt);
-          if (!line) return;
+          if (!line) return false;
           const statuses = plugin.settings.statuses;
-          if (nextStatus(statuses, TASK.exec(line.text)[2]) === null) return;
-          evt.preventDefault();
+          if (nextStatus(statuses, TASK.exec(line.text)[2]) === null) return false;
+          const box = evt.target;
           const next = cycleLine(view, line, statuses);
           // Resync the displayed checkbox with the text after the redraw
-          window.setTimeout(() => { evt.target.checked = next !== " "; }, 1);
+          window.setTimeout(() => { box.checked = next !== " "; }, 1);
+          return true;
+        };
+
+        // Press on a checkbox: CodeMirror must not see it (it would move the text cursor there)
+        this.onPress = (evt) => {
+          if (!checkboxLine(view, evt)) return;
+          if (evt.type === "touchstart") {
+            const t = evt.touches[0];
+            this.touch = { start: Date.now(), x: t.clientX, y: t.clientY, scrollTop: view.scrollDOM.scrollTop };
+          }
+          evt.stopPropagation();
+          if (evt.type !== "touchstart") evt.preventDefault();
+        };
+
+        // Mobile tap. The phone focuses the editor at the end of a tap on editable text: it then
+        // scrolls to the text cursor and opens the keyboard. Cancelling the touchend prevents that
+        // (and the click that would follow), so the status is changed here instead.
+        this.onTouchEnd = (evt) => {
+          const touch = this.touch;
+          this.touch = undefined;
+          if (!touch || Date.now() - touch.start > LONG_PRESS_MS) return; // long press: menu
+          const t = evt.changedTouches[0];
+          if (Math.hypot(t.clientX - touch.x, t.clientY - touch.y) > TAP_SLOP_PX) return; // a swipe, not a tap
+          evt.preventDefault();
+          evt.stopPropagation();
+          if (view.hasFocus) view.contentDOM.blur();
+          if (!cycle(evt)) return;
+          const restore = () => { view.scrollDOM.scrollTop = touch.scrollTop; };
+          window.requestAnimationFrame(restore);
+          window.setTimeout(restore, 50);
+        };
+
+        // Mouse click (computer)
+        this.onClick = (evt) => {
+          if (cycle(evt)) evt.preventDefault();
         };
 
         // Right click: menu of every complete status, the current one ticked
@@ -188,10 +230,14 @@ const checkboxExtension = (plugin) =>
           );
         };
 
+        for (const type of PRESS_EVENTS) view.dom.addEventListener(type, this.onPress, true);
+        view.dom.addEventListener("touchend", this.onTouchEnd, true);
         view.dom.addEventListener("click", this.onClick);
         view.dom.addEventListener("contextmenu", this.onContextMenu);
       }
       destroy() {
+        for (const type of PRESS_EVENTS) this.view.dom.removeEventListener(type, this.onPress, true);
+        this.view.dom.removeEventListener("touchend", this.onTouchEnd, true);
         this.view.dom.removeEventListener("click", this.onClick);
         this.view.dom.removeEventListener("contextmenu", this.onContextMenu);
       }
