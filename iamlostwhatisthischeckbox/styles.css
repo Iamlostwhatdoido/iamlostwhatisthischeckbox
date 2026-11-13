@@ -1,0 +1,54 @@
+/* Settings: one row per checkbox status.
+   Two blocks: the name, then everything else (.iwc-tail). When both do not fit on one line,
+   the second block wraps under the name and spans the whole line. */
+
+.iwc-status-row .setting-item-control {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 6px;
+}
+
+/* The name takes the free width, and wants at least 10 characters before wrapping.
+   Huge growth factor next to the tail's 1: on a shared line it takes almost all the free width.
+   !important: the mobile theme forces text fields to a full width. */
+.iwc-status-row .setting-item-control input.iwc-name {
+  flex: 1000 1 10em !important;
+  width: auto !important;
+  min-width: 0;
+}
+
+/* Next to the name (factor 1000) the tail gains almost nothing; alone on its own line (wrapped)
+   it takes the whole line. (A factor below 1 would not do: when the factors of a line add up to
+   less than 1, only that fraction of the free width is handed out.)
+   Only the two character fields share that extra width; the arrow and buttons keep their size. */
+.iwc-status-row .iwc-tail {
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.iwc-status-row .iwc-tail > * {
+  flex: 0 0 auto;
+}
+
+/* Single-character fields: one character wide on a single line, they grow once wrapped */
+.iwc-status-row .iwc-tail input.iwc-char {
+  flex: 1 1 2.5em !important;
+  width: 2.5em !important;
+  min-width: 2.5em !important;
+  max-width: none !important;
+  padding-left: 4px;
+  padding-right: 4px;
+  text-align: center;
+}
+
+/* Mobile: thinner cards and tighter buttons */
+.is-mobile .iwc-status-row {
+  padding: 6px 8px;
+}
+
+.is-mobile .iwc-status-row .clickable-icon {
+  padding: 4px;
+}

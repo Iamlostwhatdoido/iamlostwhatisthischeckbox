@@ -320,12 +320,12 @@ class CycleSettingTab extends PluginSettingTab {
       const row = new Setting(containerEl)
         .addText((t) => {
           t.setPlaceholder("Name").setValue(status.name).onChange((v) => { status.name = v; validate(); });
-          t.inputEl.style.flex = "1"; // the name takes the freed width
+          t.inputEl.addClass("iwc-name");
           checks.push([t.inputEl, () => status.name.trim() !== ""]);
         })
         .addText((t) => {
           t.inputEl.maxLength = 1;
-          t.inputEl.size = 3;
+          t.inputEl.addClass("iwc-char");
           // Locked rows: Obsidian's native characters are fixed
           if (status.locked && status.symbol === " ") return t.setPlaceholder("space").setDisabled(true);
           if (status.locked) return t.setValue(status.symbol).setDisabled(true);
@@ -336,7 +336,7 @@ class CycleSettingTab extends PluginSettingTab {
         .addText((t) => {
           t.setPlaceholder("Next").setValue(status.next).onChange((v) => { status.next = toSymbol(v); validate(); });
           t.inputEl.maxLength = 1;
-          t.inputEl.size = 3;
+          t.inputEl.addClass("iwc-char");
           checks.push([t.inputEl, () => status.next !== ""]);
         })
         // Reorder any row, locked ones included (the menu and "Previous" follow this order)
@@ -366,6 +366,11 @@ class CycleSettingTab extends PluginSettingTab {
         });
       // No label on the left: the empty area goes away, the fields fill the row
       row.infoEl.remove();
+      row.settingEl.addClass("iwc-status-row"); // layout in styles.css
+      // Everything after the name, grouped: on a narrow screen it wraps to a second line as a block
+      const tail = createDiv({ cls: "iwc-tail" });
+      tail.append(...Array.from(row.controlEl.children).slice(1));
+      row.controlEl.append(tail);
     });
 
     new Setting(containerEl)

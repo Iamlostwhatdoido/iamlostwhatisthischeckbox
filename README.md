@@ -28,7 +28,7 @@ Editor commands (source mode and Live Preview), applied to every checkbox line o
 - **Pick checkbox status**: keyboard version of the right-click menu.
 
 ## Installation
-Copy the `iamlostwhatisthischeckbox/` folder (`main.js` and `manifest.json`) into `<vault>/.obsidian/plugins/`, then enable the plugin in Obsidian's settings.
+Copy the `iamlostwhatisthischeckbox/` folder (`main.js`, `manifest.json` and `styles.css`) into `<vault>/.obsidian/plugins/`, then enable the plugin in Obsidian's settings.
 
 ## Known limits
 - Checkboxes inside callouts are ignored (like Tasks).
